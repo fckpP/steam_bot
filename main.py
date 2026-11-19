@@ -1,9 +1,15 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import requests
+import os
+import dotenv
+from dotenv import load_dotenv
 
 # Твой токен от BotFather
 TOKEN = "ВСТАВЬ_СЮДА_СВОЙ_ТОКЕН"
+
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Привет! Я бот.\nНапиши /game 730 (по ID) или /game portal (по названию).")

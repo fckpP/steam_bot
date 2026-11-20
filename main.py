@@ -112,10 +112,29 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     data = query.data
+    
     if data.startswith("ach_"):
+        appid = data.split("_")[1]
         await query.message.reply_text("🏆 Здесь будет список достижений (мы добавим его позже).")
+        
     elif data.startswith("rev_"):
-        await query.message.reply_text("⭐ Здесь будут отзывы (мы добавим их позже).")
+        appid = data.split("_")[1]
+        await query.message.reply_text("⏳ Загружаю отзывы...")
+        
+    
+        review_url = f"https://store.steampowered.com/appreviews/{appid}?json=1&language=russian"
+        review_response = requests.get(review_url).json()
+        
+        summary = review_response.get("query_summary", {})
+        review_desc = summary.get("review_score_desc", "Нет данных")
+        total_reviews = summary.get("total_reviews", 0)
+        
+        if total_reviews > 0:
+            text = f"⭐ <b>Отзывы:</b> {review_desc}\n📊 Всего отзывов: {total_reviews}"
+        else:
+            text = "⭐ Отзывов пока нет."
+            
+        await query.message.reply_text(text, parse_mode="HTML")
 
 
 def main():

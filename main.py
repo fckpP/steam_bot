@@ -69,6 +69,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if country_price_info:
                     price = country_price_info.get("final_formatted")
                     discount = country_price_info.get("discount_percent", 0)
+                    price = price.replace("руб.", "₽")
                     if discount > 0:
                         prices.append(f"{country['flag']} {price} (-{discount}%)")
                     else:

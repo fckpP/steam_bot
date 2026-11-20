@@ -11,35 +11,30 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Я бот.\nНапиши /game 730 (по ID) или /game portal (по названию).")
+    await update.message.reply_text("Привет! Я-твой помощник по играм в Steam.\nЧтобы начать, введи название игры после команды /game. Пример: /game Cyberpunk 2077")
 
 async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Напиши ID или название игры после команды. Пример: /game portal 2")
+        await update.message.reply_text("Пожалуйста, укажи название игры после команды /game.")
         return
     
-    # Собираем всё, что написал пользователь (на случай, если он написал "portal 2")
+    # Собираем всё, что написал пользователь
     user_input = " ".join(context.args)
-    appid = None
-
-    # Если пользователь ввел цифры (ID)
-    if user_input.isdigit():
-        appid = user_input
-        await update.message.reply_text(f"Ищу игру по ID {appid}...")
+    
+    await update.message.reply_text(f"Секунду, ищу игру ...🚀")
+    
+    # Ищем игру. Параметр "l": "english" помогает найти игру на английском
+    search_url = "https://store.steampowered.com/api/storesearch"
+    search_params = {"term": user_input, "l": "english", "cc": "RU"} 
+    
+    search_response = requests.get(search_url, params=search_params).json()
+    
+    if search_response.get("items"):
+        # Берем первую игру из списка результатов
+        appid = str(search_response["items"][0]["id"])
     else:
-        # Если ввел текст, идем в поиск Steam
-        await update.message.reply_text(f"Ищу игру по названию '{user_input}'...")
-        search_url = "https://store.steampowered.com/api/storesearch"
-        search_params = {"term": user_input, "l": "russian", "cc": "RU"}
-        
-        search_response = requests.get(search_url, params=search_params).json()
-        
-        if search_response.get("items"):
-            # Берем первую игру из списка результатов
-            appid = str(search_response["items"][0]["id"])
-        else:
-            await update.message.reply_text("По такому названию ничего не найдено.")
-            return
+        await update.message.reply_text("По такому названию ничего не найдено.")
+        return
 
     # Теперь у нас есть appid, и мы запрашиваем полную инфу
     url = "https://store.steampowered.com/api/appdetails"

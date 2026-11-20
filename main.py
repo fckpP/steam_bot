@@ -5,8 +5,7 @@ import os
 import dotenv
 from dotenv import load_dotenv
 
-# Твой токен от BotFather
-TOKEN = "ВСТАВЬ_СЮДА_СВОЙ_ТОКЕН"
+
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")

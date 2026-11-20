@@ -112,30 +112,55 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     data = query.data
-    
+    print(f"Нажата кнопка: {data}")
+
     if data.startswith("ach_"):
         appid = data.split("_")[1]
-        await query.message.reply_text("🏆 Здесь будет список достижений (мы добавим его позже).")
-        
+        await query.message.reply_text("🏆 Достижения в разработке...")
+
     elif data.startswith("rev_"):
         appid = data.split("_")[1]
         await query.message.reply_text("⏳ Загружаю отзывы...")
-        
-    
-        review_url = f"https://store.steampowered.com/appreviews/{appid}?json=1&language=russian"
-        review_response = requests.get(review_url).json()
-        
-        summary = review_response.get("query_summary", {})
-        review_desc = summary.get("review_score_desc", "Нет данных")
-        total_reviews = summary.get("total_reviews", 0)
-        
-        if total_reviews > 0:
-            text = f"⭐ <b>Отзывы:</b> {review_desc}\n📊 Всего отзывов: {total_reviews}"
-        else:
-            text = "⭐ Отзывов пока нет."
-            
-        await query.message.reply_text(text, parse_mode="HTML")
 
+        try:
+            review_url = f"https://api.steampowered.com/IUserReviewsService/GetAppReviews/v1/?appid={appid}&language=russian&json=1"
+
+            headers = {"User-Agent": "Mozilla/5.0"}
+            response = requests.get(review_url, headers=headers)
+
+            if response.status_code != 200:
+                await query.message.reply_text("⚠️ Steam временно недоступен. Попробуй позже.")
+                return
+
+            review_response = response.json()
+            
+            
+            summary = review_response.get("query_summary", {})
+            
+            
+            total_reviews = summary.get("total_reviews")
+            if total_reviews is None:
+                total_reviews = review_response.get("total_reviews", 0)
+            
+            
+            review_desc = summary.get("review_score_desc", "Нет данных")
+            
+            
+            if total_reviews == 0:
+                pos = summary.get("total_positive", 0)
+                neg = summary.get("total_negative", 0)
+                total_reviews = pos + neg
+
+            if total_reviews > 0:
+                text = f"⭐ <b>Отзывы:</b> {review_desc}\n📊 Всего отзывов: {total_reviews}"
+            else:
+                text = "⭐ Отзывов пока нет."
+                
+            await query.message.reply_text(text, parse_mode="HTML")
+
+        except Exception as e:
+            print(f"Ошибка при запросе отзывов: {e}")
+            await query.message.reply_text("⚠️ Не удалось загрузить отзывы. Попробуй позже.")
 
 def main():
     if not TOKEN:

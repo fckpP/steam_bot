@@ -38,7 +38,7 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Теперь у нас есть appid, и мы запрашиваем полную инфу
     url = "https://store.steampowered.com/api/appdetails"
-    response = requests.get(url, params={"appids": appid, "l": "russian"})
+    response = requests.get(url, params={"appids": appid, "l": "russian", "cc": "ru"}) 
     data = response.json()
 
     info = data.get(appid, {})
@@ -50,11 +50,29 @@ async def game(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = game_data.get("name", "Прошу прощения, но название игры не найдено.")
     description = game_data.get("short_description", "Описание отсутствует")
     image_url = game_data.get("header_image")
-
-    if image_url:
-        await update.message.reply_photo(photo=image_url, caption=f"🎮: {name}\n\n {description}")
+            # Проверяем цену
+        # Проверяем цену
+    is_free = game_data.get("is_free", False)
+    price_info = game_data.get("price_overview")
+    
+    if is_free:
+        price_text = "💰 Бесплатно"
+    elif price_info:
+        price = price_info.get("final_formatted")
+        discount = price_info.get("discount_percent", 0)
+        if discount > 0:
+            price_text = f"💰 Цена: {price} (Скидка {discount}%)"
+        else:
+            price_text = f"💰 Цена: {price}"
     else:
-        await update.message.reply_text(f"🎮: {name}\n\n {description}")    
+        price_text = "💰 Цена не указана"
+    if image_url:
+        await update.message.reply_photo(
+            photo=image_url, 
+            caption=f"🎮 {name}\n{price_text}\n\n{description}"
+        )
+    else:
+        await update.message.reply_text(f"🎮 {name}\n{price_text}\n\n{description}")    
 
 def main():
     app = Application.builder().token(TOKEN).build()
